@@ -2,14 +2,20 @@
 
 > **One-line pitch:** A done-for-you Google review reply and Google Business Profile posting tool for independent restaurants, approved by SMS so owners never have to open a dashboard.
 
-> **North Star for this build:** Ship something a real restaurant owner uses within 2 weekends. Everything else is secondary.
+> **North Star (two phases):**  
+> **Phase 0 — Validation:** Ship a **frontend-only clickable prototype** and show it to 3–5 independent restaurant owners. Goal: learn whether they would use SMS approval *before* building backend (Google, Twilio, DB).  
+> **Phase 1 — Product MVP:** Only after validation signals demand — working integrations (Supabase, GBP API, Claude, Twilio, cron).
 
 ---
 
 ## 1. Context & Goals
 
-### Primary goal
-Build a working MVP that (a) I can show 3-5 local restaurant owners to validate, and (b) functions as a portfolio piece for PM / BizOps / fintech-adjacent job applications.
+### Primary goal (Phase 0 — now)
+1. **Validate demand** — Show owners a realistic demo (landing + simulated phone/SMS approval flow + sample reviews/drafts). Ask whether they would use it and at what price band. **No backend required** for this phase.
+2. **Portfolio** — A deployed URL + screen recording or GIF of the demo is enough for applications while Phase 1 is deferred.
+
+### Primary goal (Phase 1 — after validation)
+Build a working MVP that (a) real restaurant owners can connect to Google and use via SMS, and (b) functions as a deeper portfolio / business story for PM / BizOps / fintech-adjacent roles.
 
 ### Secondary goal
 If validation succeeds (3+ owners say they'd pay), convert it into a real $5-15K MRR business by the time I graduate in May 2026.
@@ -20,12 +26,22 @@ If validation succeeds (3+ owners say they'd pay), convert it into a real $5-15K
 - A concise README that tells the product story the way a PM would: problem → user → solution → metrics
 - Clean code organization that a technical interviewer could skim in 5 minutes
 
-### Explicit non-goals for v1
+### Explicit non-goals for Phase 0 (validation prototype)
+- **No backend:** No Supabase writes, no Google OAuth in production demo, no Twilio webhooks, no API keys required for someone to click through the demo.
+- **No “fake product” claims:** The demo is clearly a **prototype / simulation** (sample restaurant, sample reviews). Do not imply live Google connection until Phase 1.
+- **No scope creep:** One polished path — landing → interactive demo → optional reflection — not a full dashboard build.
+
+### Explicit non-goals for Phase 1 (product MVP / old “v1”)
 - No multi-tenant billing infrastructure
 - No admin dashboard beyond a basic ops view
 - No mobile app
 - No analytics beyond what Google already provides
 - No support for anything other than Google Business Profile (no Yelp, TripAdvisor, Facebook yet)
+
+### Success criteria for Phase 0 (validation)
+- [ ] **3–5 owner conversations** with the prototype (in person or shared link).
+- [ ] **Artifact:** Record a short walkthrough (or GIF) of the demo for portfolio and follow-ups.
+- [ ] **Decision:** After conversations, written note: “build Phase 1” vs “portfolio-only” vs “pause.” **Do not start Supabase/Google/Twilio until this decision.**
 
 ---
 
@@ -58,7 +74,13 @@ My distribution advantage is being plugged into several tight-knit local owner c
 
 ## 3. Product Scope
 
-### Core loop (the MVP must nail this)
+### Phase 0 demo (what owners see — must nail this first)
+1. Clear **problem** on the landing page (reviews pile up; owners live on the phone).
+2. **Interactive prototype** — simulated text thread: new review → AI-written draft arrives as a message → owner taps **OK / EDIT / SKIP** (client-side only).
+3. **Trust** — Copy explains drafts match their tone later via onboarding; prototype uses fixed sample copy.
+4. **Closing the loop** — End screen asks whether they’d use something like this (conversation starter for you; optional on-screen buttons are fine but **not** persisted without backend).
+
+### Core loop (Phase 1 — the real MVP must nail this)
 1. System detects new Google review on a connected Business Profile
 2. AI drafts a reply in the owner's voice, appropriate to the review's sentiment
 3. Owner receives the draft via SMS (primary) or email (fallback)
@@ -66,7 +88,7 @@ My distribution advantage is being plugged into several tight-knit local owner c
 5. System posts the approved reply to Google Business Profile
 6. Owner sees a weekly summary: X reviews answered, average response time, ranking trend
 
-### v1 features (must-have for MVP)
+### Phase 1 features (must-have for MVP — build only after validation)
 - Google OAuth connection to Google Business Profile
 - Polling on new reviews (Google doesn't offer true review webhooks)
 - LLM-generated reply drafts with restaurant-specific context (cuisine, vibe, owner's name, signature dishes)
@@ -74,7 +96,7 @@ My distribution advantage is being plugged into several tight-knit local owner c
 - Automatic posting of approved replies back to Google
 - Simple admin page listing pending replies, approved replies, and connection status
 
-### v1.1 features (nice-to-have, build only if v1 works)
+### Phase 1.1 features (nice-to-have, build only if Phase 1 works)
 - Weekly Google Business Profile posts (AI-drafted from a content calendar: specials, hours, holidays the restaurant cares about)
 - Tone customization ("formal" vs "warm" vs "short and direct")
 - Bulk-approval for backlogs of old unanswered reviews
@@ -91,7 +113,13 @@ My distribution advantage is being plugged into several tight-knit local owner c
 
 ## 4. Technical Architecture
 
-### Stack (optimized for Cursor + speed of shipping)
+### Phase 0 stack (validation — current)
+- **Framework:** Next.js (App Router) — static/SSR pages + **client-side state only** for the demo.
+- **Styling:** Tailwind + shadcn/ui — one polished route (e.g. `/demo`) plus landing.
+- **Data:** Fixtures in-repo (sample restaurant, reviews, draft replies). No database.
+- **Hosting:** Vercel (free tier) — deploy the prototype URL for owners and portfolio.
+
+### Phase 1 stack (product MVP — after validation)
 - **Framework:** Next.js 15 (App Router) — Cursor has deep training data on this
 - **Database + Auth:** Supabase — Postgres, auth, row-level security, easy schema sharing with Cursor
 - **Hosting:** Vercel — one-click deploy from GitHub
@@ -109,7 +137,7 @@ Note on Twilio: For v1, we are using an unverified/testing number to send texts 
 - Next.js API routes cover both the Google OAuth callback and the Twilio webhook
 - All services have generous free tiers — estimated infra cost for MVP is $0-20/month
 
-### Data model (Supabase tables)
+### Data model (Supabase tables — Phase 1 only)
 ```
 restaurants
   id (uuid, pk)
@@ -151,7 +179,7 @@ sms_logs
   created_at (timestamptz)
 ```
 
-### Key flows
+### Key flows (Phase 1)
 
 **Onboarding flow**
 1. Owner (or I, doing it for them) visits the app
@@ -171,7 +199,7 @@ sms_logs
 7. If approved, post to Google Business Profile API
 8. Log result, update draft status
 
-### Prompt strategy for reply generation
+### Prompt strategy for reply generation (Phase 1 — Claude)
 The system prompt needs to be carefully engineered. Key constraints:
 - Never apologize for things the business didn't do
 - Thank the reviewer by first name if available
@@ -204,38 +232,37 @@ Return ONLY the reply text, no quotes or preamble.
 
 ---
 
-## 5. Build Plan — Week by Week
+## 5. Build Plan — Phased
 
-### Weekend 1 (8-12 focused hours) — Skeleton + Google connection
-- [ ] **Apply for Google Business Profile API access on Day 1 — this is the critical path item; approval can take weeks**
-- [ ] Scaffold Next.js app, deploy to Vercel the same day (empty app with a landing page)
-- [ ] Set up Supabase project, create schema above, enable RLS
-- [ ] Implement Google OAuth flow for Business Profile scopes
-- [ ] Build "connect your restaurant" onboarding screen
-- [ ] Hardcode a test call to fetch last 10 reviews from a connected location and display them in a simple list
-- [ ] Build a mock-data mode so development continues if API access is still pending
-- [ ] **Acceptance test:** I can sign in with Google, connect a test GBP, and see my reviews in the app (or mock reviews if API access isn't granted yet)
-- [ ] Contingency: If Google API access is pending, build a "Manual Mode" toggle. Use SerpApi to fetch reviews and allow me to manually copy-paste the approved drafts back to Google.
+### Phase 0 — Validation prototype (frontend only) — **current focus**
+- [x] Landing page sells the problem + SMS-first promise (already started; keep iterating copy).
+- [x] **`/demo` route:** Interactive simulation — phone-style UI, sample reviews + drafts from fixtures, OK / EDIT / SKIP with **client-side state only** (no API calls).
+- [x] Label the demo honestly: **“Prototype — sample data.”**
+- [ ] Deploy to Vercel; grab a shareable URL for owner conversations.
+- [ ] Record a **60–90s screen recording or GIF** for portfolio + async sharing.
+- [ ] **Acceptance test:** An owner can complete the demo on their phone in under 3 minutes without signing in or installing anything.
 
-### Weekend 2 — AI drafts + SMS loop
-- [ ] Integrate Anthropic API, build the reply-drafting function with the prompt above
-- [ ] For each new review without a draft, generate and save a draft
-- [ ] Integrate Twilio, set up phone verification in onboarding
-- [ ] Build outbound SMS: for each pending draft, send to owner
-- [ ] Build inbound SMS webhook: parse OK / EDIT / SKIP, update draft status
-- [ ] If approved, post reply to Google Business Profile via API
-- [ ] **Acceptance test:** End-to-end — a review appears, I get an SMS, I reply OK, the reply appears on Google within 60 seconds
+### Phase 1 — Weekend A — Skeleton + Google connection *(after Phase 0 go decision)*
+- [ ] **Apply for Google Business Profile API access — critical path; approval can take weeks** (can parallel-track once you commit to Phase 1).
+- [ ] Supabase project, schema (Section 4), RLS
+- [ ] Google OAuth for Business Profile scopes
+- [ ] Onboarding screen + mock-data mode until API access is live
+- [ ] **Acceptance test:** Sign in, connect test GBP (or mock mode), see reviews
 
-### Weekend 3 — Polish + first real user
-- [ ] Build admin page (list of pending drafts, status indicators, manual retry button)
-- [ ] Add initial 30-day backfill on connect (fetch + draft replies for old unanswered reviews)
-- [ ] Error handling: Google token expiry, Twilio failures, Claude API errors
-- [ ] Set up Vercel Cron for the 30-min polling job
-- [ ] Write a clean README (see Section 8)
-- [ ] Walk into the deli, do the onboarding live with the owner, get them using it
-- [ ] **Acceptance test:** One real restaurant uses the tool for a full week without me fixing anything
+### Phase 1 — Weekend B — AI drafts + SMS loop
+- [ ] Anthropic integration + drafting function (prompt in Section 4)
+- [ ] Twilio outbound + inbound webhook (OK / EDIT / SKIP)
+- [ ] Post approved reply via GBP API
+- [ ] **Acceptance test:** Review → SMS → OK → reply on Google within ~60 seconds
 
-### Weekend 4 (optional, only if v1 is stable) — Weekly GBP posts
+### Phase 1 — Weekend C — Polish + first real user
+- [ ] Admin-style page: pending drafts, statuses, retry
+- [ ] 30-day backfill on connect
+- [ ] Error handling + Vercel Cron (30-min poll)
+- [ ] README update for Phase 1 story
+- [ ] **Acceptance test:** One restaurant uses it for a week without emergency fixes
+
+### Phase 1 — Optional weekend — Weekly GBP posts
 - [ ] Add `scheduled_posts` table
 - [ ] Build Claude prompt for weekly post drafts (specials, hours, holidays)
 - [ ] Send a weekly SMS with the drafted post for approval
@@ -255,9 +282,11 @@ When this goes on the portfolio site, it needs to read like a PM case study, not
 5. **Results** — Real numbers: "X reviews answered across Y restaurants, average response time dropped from 14 days to Z hours." Only include what's actually true.
 6. **What I'd do differently** — Honest reflection. Shows maturity.
 
+**Phase 0 note:** Until Phase 1 ships, swap “results” for **validation learnings** (quotes or themes from owners, willingness to pay signals) — still credible for PM interviews.
+
 ### For PM interviews specifically, prepare to answer
 - "Why this problem?" → lived experience + network access + measurable ROI
-- "How did you prioritize scope?" → point to the v1.1 / out-of-scope lists in this plan
+- "How did you prioritize scope?" → Phase 0 prototype first → Phase 1 only after validation; point to Phase 1.1 / out-of-scope lists for later
 - "What's the biggest risk?" → Google API policy changes, competition from Birdeye/Podium moving downmarket, LLM costs scaling with volume
 - "How would you grow this?" → land-and-expand geographically (Pittsburgh independents → other mid-size US metros), pricing tiers by review volume, agency/white-label for consultants
 
@@ -272,11 +301,12 @@ When this goes on the portfolio site, it needs to read like a PM case study, not
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| Google Business Profile API approval takes weeks | High | Apply Day 1; build with mock mode until access arrives |
+| Building backend before validating | High | **Phase 0 rule:** ship `/demo` + owner conversations **before** Supabase/Google/Twilio |
+| Google Business Profile API approval takes weeks | High | Defer API application until Phase 1 go decision; Phase 0 needs no GBP access |
 | Twilio A2P 10DLC business SMS registration is slow in US | High | Start with personal number for beta; register a campaign before scaling past 5 users |
 | LLM costs spike with volume | Low at MVP scale | Cap at 500 replies/month/restaurant; use Claude Haiku for drafts, Sonnet only for negative reviews |
 | Owners don't actually use SMS approval | Medium | The deli owner is user #1 — if he doesn't use it, redesign before building more |
-| This eats time from the job search | High | Hard cap of 30 hrs over 3 weekends; if not validated by end of Weekend 3, archive it as a portfolio piece only |
+| This eats time from the job search | High | Phase 0: hard cap (~1–2 weekends prototype + conversations). If validation is weak, stop at portfolio GIF + archive Phase 1 |
 | Visa / business ownership questions | Unknown | Portfolio-first framing avoids this. If it becomes a business, talk to an immigration attorney before taking real payments |
 
 ---
@@ -307,7 +337,8 @@ Keep it under 200 lines. Recruiters skim.
 
 ## 9. Decisions I'm Making Upfront (so I don't re-debate them)
 
-- **No free tier.** If someone won't pay $49/month, they're not a customer; they're a distraction.
+- **Validate before backend.** Phase 0 is frontend-only demos + conversations. Phase 1 starts only after a deliberate go/no-go.
+- **No free tier (when charging).** If someone won't pay $49/month at launch, they're not a customer; they're a distraction. *(Unpaid pilots during validation are fine — they're research.)*
 - **SMS-first, not email, not app.** The user persona demands it. Do not build a mobile app.
 - **Google only.** Yelp and Facebook are feature creep.
 - **No AI-generated reviews, ever.** Non-negotiable.
@@ -319,12 +350,14 @@ Keep it under 200 lines. Recruiters skim.
 ## 10. Cursor-Specific Instructions (keep this section for when building)
 
 When prompting Cursor:
-- Reference this plan.md in context for every non-trivial change
-- Ask Cursor to generate full files rather than diffs when scaffolding
-- For the Supabase schema, paste the SQL from Section 4 directly into Cursor's context
-- For API integrations (Google Business Profile, Twilio), paste the relevant API docs into context before asking for implementation
-- Use Cursor's "Ask" mode for architecture questions, "Agent" mode for file generation
-- Keep each prompt scoped to one file or one feature — don't ask for the whole app at once
+- Reference this plan.md in context for every non-trivial change.
+- **Phase 0:** Prioritize `/demo` + landing polish; avoid new backend routes unless Phase 1 has started.
+- **Phase 1:** For Supabase schema, paste the SQL from Section 4 into context. For Google/Twilio, paste API docs before implementation.
+- Use Cursor's "Ask" mode for architecture questions, "Agent" mode for file generation.
+- Keep each prompt scoped to one file or one feature.
 
-Suggested first prompt to Cursor after reading this plan:
-> "Scaffold a Next.js 15 App Router project with Supabase auth, Tailwind, and shadcn/ui. Set up the database schema from Section 4 of plan.md as a Supabase migration. Create a landing page, a /dashboard route behind auth, and a /api/google/callback route stub. Deploy config for Vercel. Don't implement business logic yet — just the skeleton."
+Suggested prompt for **Phase 0:**
+> "Using plan.md Phase 0, build `/demo`: phone-style UI, fixture reviews/drafts only, OK / EDIT / SKIP with client-side state. Label clearly as a prototype. Wire the landing page CTA to `/demo`. No API calls."
+
+Suggested prompt for **Phase 1:**
+> "Scaffold Supabase migration from Section 4, auth middleware, `/api/google/callback`, and swap fixture review fetch for Google API when mock mode is off."

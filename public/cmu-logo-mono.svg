@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 268 52" role="img" aria-labelledby="cmuMonoTitle">
+  <title id="cmuMonoTitle">Carnegie Mellon University</title>
+  <!-- Monochrome wordmark (black); use CSS invert on dark backgrounds if needed -->
+  <text
+    fill="#000000"
+    font-family="Georgia, Times New Roman, serif"
+    font-size="17"
+    font-weight="700"
+    letter-spacing="-0.02em"
+    x="134"
+    y="34"
+    text-anchor="middle"
+  >Carnegie Mellon University</text>
+</svg>
