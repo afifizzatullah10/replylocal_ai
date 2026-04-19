@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/card";
 import { env } from "@/lib/env";
 import { fetchReviewsForRestaurant } from "@/lib/google/reviews";
+import { OwnerAiSummarySection } from "@/components/dashboard/owner-ai-summary-section";
 import { getMockRestaurant, getMockDrafts } from "@/lib/mock/data";
+import { getMockOwnerAiSummary } from "@/lib/mock/owner-ai-summary";
 import type { Review, ReplyDraft } from "@/lib/supabase/types";
 import { Star, MessageCircle, ExternalLink } from "lucide-react";
 
@@ -79,6 +81,11 @@ export default async function DashboardPage() {
           <Stat label="Unanswered" value={stats.unanswered.toString()} />
           <Stat label="Pending approval" value={stats.pending.toString()} />
         </section>
+
+        <OwnerAiSummarySection
+          summary={getMockOwnerAiSummary()}
+          reviewCount={reviews.length}
+        />
 
         <Card>
           <CardHeader>

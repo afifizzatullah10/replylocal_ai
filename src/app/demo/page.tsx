@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 import { DemoExperience } from "@/components/demo/demo-experience";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -27,9 +28,21 @@ export default function DemoPage() {
               account.
             </p>
           </div>
-          <Link href="/" className={buttonVariants({ variant: "outline", size: "sm" })}>
-            ← Home
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/dashboard"
+              className={buttonVariants({ size: "sm" })}
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" aria-hidden />
+              Dashboard
+            </Link>
+            <Link
+              href="/"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              ← Home
+            </Link>
+          </div>
         </div>
       </div>
 
